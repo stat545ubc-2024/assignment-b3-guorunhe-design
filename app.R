@@ -35,11 +35,6 @@ student_data <- student_data %>%
     Tutoring_Sessions = as.numeric(Tutoring_Sessions)
   )
 
-# Verify that 'Exam_Score' exists
-if(!"Exam_Score" %in% names(student_data)){
-  stop("Error: 'Exam_Score' column not found in the dataset.")
-}
-
 # Define UI for the application
 ui <- dashboardPage(
   
