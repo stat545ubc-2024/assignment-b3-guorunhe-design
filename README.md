@@ -17,7 +17,7 @@ The **Student Performance Dashboard** is an interactive Shiny application design
 
 2. **Analytical Visualizations**
    - **Correlation Heatmap:** Visualizes Pearson correlation coefficients among key numerical variables to identify significant relationships.
-   - **Scatter Plots:** Explores relationships between study hours and exam scores to uncover patterns and trends.
+   - **Scatter Plot:** Explores relationship between study hours and exam scores to uncover patterns and trends.
 
 3. **Interactive Data Explorer**
    - **Dynamic Filtering:** Allows users to filter the dataset based on multiple criteria including gender, school type, parental education level, motivation level, internet access, hours studied, and sleep hours.
