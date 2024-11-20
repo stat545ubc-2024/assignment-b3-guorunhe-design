@@ -10,7 +10,7 @@ library(shinythemes)
 library(corrplot)
 library(tidyr)
 
-# Read the dataset outside the server function to make it accessible in UI and Server
+# Read the dataset
 student_data <- read.csv("StudentPerformanceFactors.csv", stringsAsFactors = FALSE)
 
 # Data Preprocessing
@@ -28,9 +28,7 @@ student_data <- student_data %>%
     Parental_Education_Level = factor(Parental_Education_Level, levels = c("High School", "College", "Postgraduate")),
     Gender = factor(Gender, levels = c("Male", "Female", "Other")),
     Family_Income = factor(Family_Income, levels = c("Low", "Medium", "High")),
-    # Convert 'Distance_from_Home' to factor as it is categorical
     Distance_from_Home = factor(Distance_from_Home, levels = c("Near", "Moderate", "Far")),
-    # Ensure numerical variables are correctly typed
     Physical_Activity = as.numeric(Physical_Activity),
     Tutoring_Sessions = as.numeric(Tutoring_Sessions)
   )
@@ -83,10 +81,10 @@ ui <- dashboardPage(
                   width = 12,
                   tabBox(
                     width = 12,
-                    tabPanel("Motivation vs. Exam Score", plotlyOutput("motivationBoxPlot")),
-                    tabPanel("Teacher Quality vs. Exam Score", plotlyOutput("teacherQualityPlot")),
-                    tabPanel("School Type vs. Average Score", plotlyOutput("schoolTypeBarPlot")),
-                    tabPanel("Parental Involvement & Education", plotlyOutput("parentalInvolvementPlot"))
+                    tabPanel("Exam Scores by Motivation Level", plotlyOutput("motivationBoxPlot")),
+                    tabPanel("Exam Scores by Teacher Quality", plotlyOutput("teacherQualityPlot")),
+                    tabPanel("Average Exam Scores by School Type", plotlyOutput("schoolTypeBarPlot")),
+                    tabPanel("Exam Scores by Parental Education Level", plotlyOutput("parentalEducationPlot"))
                   )
                 )
               )
@@ -100,24 +98,15 @@ ui <- dashboardPage(
                   title = "Correlation Heatmap",
                   status = "primary",
                   solidHeader = TRUE,
-                  width = 12,
+                  width = 6,  # Half width for side-by-side layout
                   plotlyOutput("corrHeatmap", height = "400px")
-                )
-              ),
-              fluidRow(
-                box(
-                  title = "Scatter Plots",
-                  status = "primary",
-                  solidHeader = TRUE,
-                  width = 6,
-                  plotlyOutput("scatterPlot", height = "300px")
                 ),
                 box(
-                  title = "Boxplots",
+                  title = "Scatter Plot: Hours Studied vs. Exam Score",
                   status = "primary",
                   solidHeader = TRUE,
-                  width = 6,
-                  plotlyOutput("boxPlot", height = "300px")
+                  width = 6,  # Half width for side-by-side layout
+                  plotlyOutput("scatterPlot", height = "400px")
                 )
               )
       ),
@@ -248,7 +237,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # Exam Score Distribution by Motivation Level
+  # Exam Scores by Motivation Level
   # Illustrates how different motivation levels correlate with exam scores.
   output$motivationBoxPlot <- renderPlotly({
     p <- ggplot(student_data, aes(x = Motivation_Level, y = Exam_Score, fill = Motivation_Level,
@@ -263,14 +252,14 @@ server <- function(input, output, session) {
     ggplotly(p, tooltip = "text")
   })
   
-  # Teacher Quality vs. Exam Score
+  # Exam Scores by Teacher Quality
   # Examines the relationship between perceived teacher quality and student exam performance.
   output$teacherQualityPlot <- renderPlotly({
     p <- ggplot(student_data, aes(x = Teacher_Quality, y = Exam_Score, color = Teacher_Quality,
                                   text = paste("Teacher Quality:", Teacher_Quality,
                                                "<br>Exam Score:", Exam_Score))) +
       geom_jitter(width = 0.2, alpha = 0.7) +
-      labs(title = "Teacher Quality vs. Exam Score",
+      labs(title = "Exam Scores by Teacher Quality",
            x = "Teacher Quality",
            y = "Exam Score") +
       theme_minimal() +
@@ -297,19 +286,18 @@ server <- function(input, output, session) {
     ggplotly(p, tooltip = "text")
   })
   
-  # Exam Scores by Parental Involvement and Education Level
-  # Analyzes how parental involvement and education levels jointly impact student exam scores.
-  output$parentalInvolvementPlot <- renderPlotly({
-    p <- ggplot(student_data, aes(x = Parental_Involvement, y = Exam_Score, fill = Parental_Education_Level,
-                                  text = paste("Parental Involvement:", Parental_Involvement,
-                                               "<br>Parental Education:", Parental_Education_Level,
+  # Exam Scores by Parental Education Level
+  # Analyzes how parental education levels impact student exam scores.
+  output$parentalEducationPlot <- renderPlotly({
+    p <- ggplot(student_data, aes(x = Parental_Education_Level, y = Exam_Score, fill = Parental_Education_Level,
+                                  text = paste("Parental Education Level:", Parental_Education_Level,
                                                "<br>Exam Score:", Exam_Score))) +
       geom_boxplot() +
-      labs(title = "Exam Scores by Parental Involvement and Education Level",
-           x = "Parental Involvement",
-           y = "Exam Score",
-           fill = "Parental Education") +
-      theme_minimal()
+      labs(title = "Exam Scores by Parental Education Level",
+           x = "Parental Education Level",
+           y = "Exam Score") +
+      theme_minimal() +
+      theme(legend.position = "none")
     ggplotly(p, tooltip = "text")
   })
   
@@ -332,7 +320,7 @@ server <- function(input, output, session) {
       showNotification("Not enough complete cases for correlation heatmap.", type = "error")
       return(NULL)
     }
-    
+
     corr_matrix <- cor(corr_data, use = "complete.obs")
     
     # Create a heatmap using ggplot2 with the provided code
@@ -364,27 +352,12 @@ server <- function(input, output, session) {
                                                "<br>Hours Studied:", Hours_Studied,
                                                "<br>Exam Score:", Exam_Score))) +
       geom_point(alpha = 0.7) +
-      labs(title = "Hours Studied vs. Exam Score",
+      labs(title = "Scatter Plot: Hours Studied vs. Exam Score",
            x = "Hours Studied",
            y = "Exam Score") +
       theme_minimal()
     ggplotly(p, tooltip = "text") %>%
       layout(legend = list(title = list(text = '<b>Gender</b>')))
-  })
-  
-  # Boxplot: Exam Scores by Parental Education Level
-  # Compares exam score distributions across different parental education levels.
-  output$boxPlot <- renderPlotly({
-    p <- ggplot(student_data, aes(x = Parental_Education_Level, y = Exam_Score, fill = Parental_Education_Level,
-                                  text = paste("Parental Education:", Parental_Education_Level,
-                                               "<br>Exam Score:", Exam_Score))) +
-      geom_boxplot() +
-      labs(title = "Exam Scores by Parental Education Level",
-           x = "Parental Education Level",
-           y = "Exam Score") +
-      theme_minimal() +
-      theme(legend.position = "none")
-    ggplotly(p, tooltip = "text")
   })
   
   # --- Main Feature 3: Interactive Data Explorer ---

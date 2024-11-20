@@ -3,7 +3,7 @@
 
 ![Shiny App](https://img.shields.io/badge/Shiny-App-4F5B93?logo=shiny&logoColor=white)
 
-## [Live Demo](https://guorunhe.shinyapps.io/assignment-b3-guorunhe-design/)
+## [Click Here: Live Demo](https://guorunhe.shinyapps.io/assignment-b3-guorunhe-design/)
 
 ## Description
 
@@ -13,11 +13,11 @@ The **Student Performance Dashboard** is an interactive Shiny application design
 
 1. **Performance Overview**
    - **Key Metrics Display:** Showcases average exam scores, hours studied, sleep hours, physical activity levels, and tutoring sessions.
-   - **Summary Visualizations:** Includes visual representations such as exam score distributions across motivation levels, teacher quality impact, school type comparisons, and the combined effect of parental involvement and education level on exam scores.
+   - **Summary Visualizations:** Includes visual representations such as exam score distributions across motivation levels, exam scores by teacher quality, average exam scores by school type, and exam scores by parental education level.
 
 2. **Analytical Visualizations**
    - **Correlation Heatmap:** Visualizes Pearson correlation coefficients among key numerical variables to identify significant relationships.
-   - **Scatter Plots and Boxplots:** Explores relationships between study habits, teacher quality, and exam scores to uncover patterns and trends.
+   - **Scatter Plots:** Explores relationships between study hours and exam scores to uncover patterns and trends.
 
 3. **Interactive Data Explorer**
    - **Dynamic Filtering:** Allows users to filter the dataset based on multiple criteria including gender, school type, parental education level, motivation level, internet access, hours studied, and sleep hours.
