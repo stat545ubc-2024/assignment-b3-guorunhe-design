@@ -10,10 +10,25 @@ library(shinythemes)
 library(corrplot)
 library(tidyr)
 
-# Read the dataset
-student_data <- read.csv("StudentPerformanceFactors.csv", stringsAsFactors = FALSE)
+# Read the dataset with appropriate NA handling
+student_data <- read.csv("StudentPerformanceFactors.csv", na.strings = c(""))
 
-# Data Preprocessing
+# Define categorical and numeric columns
+categorical_cols <- c(
+  "Parental_Involvement", "Access_to_Resources", "Extracurricular_Activities",
+  "Motivation_Level", "Internet_Access", "Family_Income", "Teacher_Quality",
+  "School_Type", "Peer_Influence", "Learning_Disabilities",
+  "Parental_Education_Level", "Distance_from_Home", "Gender"
+)
+
+numeric_cols <- c("Exam_Score", "Hours_Studied", "Sleep_Hours", "Previous_Scores", 
+                  "Tutoring_Sessions", "Physical_Activity", "Attendance")
+
+# Replace NA with "Other" only in categorical columns
+student_data <- student_data %>%
+  mutate(across(all_of(categorical_cols), ~ replace_na(., "Other")))
+
+# Convert categorical columns to factors with appropriate levels
 student_data <- student_data %>%
   mutate(
     Parental_Involvement = factor(Parental_Involvement, levels = c("Low", "Medium", "High")),
@@ -21,16 +36,14 @@ student_data <- student_data %>%
     Extracurricular_Activities = factor(Extracurricular_Activities, levels = c("No", "Yes")),
     Motivation_Level = factor(Motivation_Level, levels = c("Low", "Medium", "High")),
     Internet_Access = factor(Internet_Access, levels = c("No", "Yes")),
-    Teacher_Quality = factor(Teacher_Quality, levels = c("Low", "Medium", "High")),
+    Family_Income = factor(Family_Income, levels = c("Low", "Medium", "High")),
+    Teacher_Quality = factor(Teacher_Quality, levels = c("Low", "Medium", "High", "Other")),
     School_Type = factor(School_Type, levels = c("Public", "Private")),
     Peer_Influence = factor(Peer_Influence, levels = c("Negative", "Neutral", "Positive")),
     Learning_Disabilities = factor(Learning_Disabilities, levels = c("No", "Yes")),
-    Parental_Education_Level = factor(Parental_Education_Level, levels = c("High School", "College", "Postgraduate")),
-    Gender = factor(Gender, levels = c("Male", "Female", "Other")),
-    Family_Income = factor(Family_Income, levels = c("Low", "Medium", "High")),
-    Distance_from_Home = factor(Distance_from_Home, levels = c("Near", "Moderate", "Far")),
-    Physical_Activity = as.numeric(Physical_Activity),
-    Tutoring_Sessions = as.numeric(Tutoring_Sessions)
+    Parental_Education_Level = factor(Parental_Education_Level, levels = c("High School", "College", "Postgraduate", "Other")),
+    Distance_from_Home = factor(Distance_from_Home, levels = c("Near", "Moderate", "Far", "Other")),
+    Gender = factor(Gender, levels = c("Male", "Female"))
   )
 
 # Define UI for the application
@@ -152,6 +165,12 @@ ui <- dashboardPage(
                   status = "primary",
                   solidHeader = TRUE,
                   width = 9,
+                  # Display the total number of students after filtering and the download button
+                  fluidRow(
+                    column(6, textOutput("studentCount")),
+                    column(6, downloadButton("downloadData", "Download CSV"))
+                  ),
+                  br(),
                   DTOutput("filteredTable")
                 )
               )
@@ -320,7 +339,7 @@ server <- function(input, output, session) {
       showNotification("Not enough complete cases for correlation heatmap.", type = "error")
       return(NULL)
     }
-
+    
     corr_matrix <- cor(corr_data, use = "complete.obs")
     
     # Create a heatmap using ggplot2 with the provided code
@@ -328,7 +347,7 @@ server <- function(input, output, session) {
     names(corr_df) <- c("Var1", "Var2", "Correlation")
     
     p <- ggplot(corr_df, aes(Var1, Var2, fill = Correlation, 
-                             text = paste("Correlation:", Correlation))) +
+                             text = paste("Correlation:", round(Correlation, 2)))) +
       geom_tile(color = "white") +
       scale_fill_gradient2(low = "blue", high = "red", mid = "white",
                            midpoint = 0, limit = c(-1,1), space = "Lab",
@@ -364,8 +383,10 @@ server <- function(input, output, session) {
   
   # Dynamic Data Table with Comprehensive Filtering
   # Enables users to filter data based on multiple criteria for targeted analysis.
-  output$filteredTable <- renderDT({
-    filtered_data <- student_data %>%
+
+  # Reactive expression for filtered data
+  filtered_data <- reactive({
+    student_data %>%
       filter(
         (Gender == input$genderFilter | input$genderFilter == "All"),
         (School_Type == input$schoolTypeFilter | input$schoolTypeFilter == "All"),
@@ -377,9 +398,27 @@ server <- function(input, output, session) {
         Sleep_Hours >= input$sleepHoursFilter[1],
         Sleep_Hours <= input$sleepHoursFilter[2]
       )
-    datatable(filtered_data, options = list(pageLength = 10, scrollX = TRUE),
+  })
+  
+  # Render the filtered data table
+  output$filteredTable <- renderDT({
+    datatable(filtered_data(), options = list(pageLength = 10, scrollX = TRUE),
               rownames = FALSE)
   })
+  
+  # Render the total number of students after filtering
+  output$studentCount <- renderText({
+    count <- nrow(filtered_data())
+    paste("Total Number of Students:", count)
+  })
+  
+  # Download handler for the filtered data
+  output$downloadData <- downloadHandler(
+    filename = "filtered_student_data.csv",
+    content = function(file) {
+      write.csv(filtered_data(), file, row.names = FALSE)
+    }
+  )
 }
 
 # Run the application 
