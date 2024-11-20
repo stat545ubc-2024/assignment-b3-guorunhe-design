@@ -287,7 +287,7 @@ server <- function(input, output, session) {
   })
   
   # Average Exam Scores by School Type
-  # Compares average exam scores between different types of schools (e.g., Public vs. Private).
+  # Compares average exam scores between different types of schools (Public vs. Private).
   output$schoolTypeBarPlot <- renderPlotly({
     avg_scores <- student_data %>%
       group_by(School_Type) %>%
