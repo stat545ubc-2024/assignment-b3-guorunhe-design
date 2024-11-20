@@ -334,15 +334,9 @@ server <- function(input, output, session) {
       select(all_of(numeric_vars)) %>%
       drop_na()
     
-    # Check if there are enough complete cases
-    if(nrow(corr_data) < 2){
-      showNotification("Not enough complete cases for correlation heatmap.", type = "error")
-      return(NULL)
-    }
-    
     corr_matrix <- cor(corr_data, use = "complete.obs")
     
-    # Create a heatmap using ggplot2 with the provided code
+    # Create a heatmap
     corr_df <- as.data.frame(as.table(corr_matrix))
     names(corr_df) <- c("Var1", "Var2", "Correlation")
     
